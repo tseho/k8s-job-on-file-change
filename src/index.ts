@@ -16,7 +16,11 @@ const K8S_API_SERVER = env("K8S_API_SERVER");
 const K8S_TOKEN = env("K8S_TOKEN");
 const K8S_NAMESPACE = env("K8S_NAMESPACE");
 const K8S_CRONJOB = env("K8S_CRONJOB");
-const DEBOUNCE_TIME = 5000; // ms
+const DEBOUNCE = Number(process.env.DEBOUNCE || 5000); // ms
+const CACHE = Boolean(process.env.CACHE || true);
+const DEBUG = Boolean(process.env.DEBUG || false);
+
+const cache = new Map();
 
 const createJob = async () => {
   try {
@@ -75,19 +79,35 @@ const createJob = async () => {
 const debounced = debounce(() => {
   console.log("File change detected. Creating Job...");
   createJob();
-}, DEBOUNCE_TIME);
+}, DEBOUNCE);
 
 const watcher = chokidar.watch(WATCH_DIR, {
-  ignored: /(^|[\/\\])\../, // ignore dotfiles
+  // ignored: /(^|[\/\\])\../, // ignore dotfiles
   persistent: true,
+  ignorePermissionErrors: true,
 });
 
+const onChange = (path: string) => {
+  const cached = CACHE && (cache.get(path) || 0) > 0;
+  if (path.match(WATCH_REGEX) && !cached) {
+    cache.set(path, Date.now());
+    console.log(`Change detected in: ${path}`);
+    debounced();
+  }
+}
+
 watcher
+  .on("ready", () => DEBUG && console.log('ALL', watcher.getWatched()))
+  .on("unlink", (path) => DEBUG && console.log(`UNLINK ${path}`))
+  .on("addDir", (path) => DEBUG && console.log(`ADDDIR ${path}`))
+  .on("unlinkDir", (path) => DEBUG && console.log(`UNLINKDIR ${path}`))
+  .on("add", (path) => {
+    DEBUG && console.log(`ADD ${path}`);
+    onChange(path);
+  })
   .on("change", (path) => {
-    if (path.match(WATCH_REGEX)) {
-      console.log(`Change detected in: ${path}`);
-      debounced();
-    }
+    DEBUG && console.log(`CHANGE ${path}`);
+    onChange(path);
   })
   .on("error", (error) => console.error(`Watcher error: ${error}`));
 
