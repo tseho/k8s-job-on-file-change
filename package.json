@@ -1,0 +1,32 @@
+{
+  "name": "k8s-job-on-file-change",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node --watch src/index.ts",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=23.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tseho/k8s-job-on-file-change.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tseho/k8s-job-on-file-change/issues"
+  },
+  "homepage": "https://github.com/tseho/k8s-job-on-file-change#readme",
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "lodash.debounce": "^4.0.8",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/node": "^22.13.11",
+    "typescript": "^5.7.3"
+  }
+}
